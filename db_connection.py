@@ -10,6 +10,9 @@ import psycopg2.pool
 import psycopg2
 
 
+# TODO - Create some exceptions
+
+
 class DBConnectionPoolMeta(type):
     """
     The Singleton meta class for DatabaseConnection class.
@@ -57,36 +60,40 @@ class DBConnectionPool(metaclass=DBConnectionPoolMeta):
         if len(self._pool) > 0:
             conn = self._pool.pop()
             self._used[conn] = True
-            # print(self._used)
             return conn
+
         elif len(self._used) < self.maxconn:
-            # print(len(self._used))
             conn = self._connect()
             self._pool.remove(conn)
             self._used[conn] = True
             return conn
         else:
-            print("Connection pool exhausted.")
+            return "Connection pool exhausted."
 
     def put_away_connection(self, conn):
-
+        del self._used[conn]
         if len(self._pool) < self.minconn:
             self._pool.append(conn)
         else:
             conn.close()
-            del self._used[conn]
 
-    def print_pool(self):
-        print("Pool:")
-        print(self._pool)
-        print("Len of pool:")
-        print(len(self._pool))
+    def close_all(self):
+        for connection in self._pool:
+            connection.close()
+        for connection in self._used:
+            connection.close()
+        self._pool = []
+        self._used = {}
 
-    def print_used(self):
-        print("Used:")
-        print(self._used)
-        print("Len of used:")
-        print(len(self._used))
+    # TODO - execute query method.
+    def execute_query(self):
+        pass
+
+    def print_pool_content(self):
+        return f"Pool List: {self._pool}\nLen of Pool: {len(self._pool)}"
+
+    def print_used_content(self):
+        return f"Used Dict: {self._used}\nLen of Used: {len(self._used)}"
 
 
 # class DatabaseConnection(metaclass=DatabaseConnectionMeta):

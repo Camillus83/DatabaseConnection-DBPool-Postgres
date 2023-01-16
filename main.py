@@ -26,7 +26,7 @@ def main():
     db.container_start()
     db.create_tables()
 
-    connection1 = DBConnectionPool(
+    db_pool_1 = DBConnectionPool(
         2,
         3,
         host="localhost",
@@ -35,18 +35,9 @@ def main():
         dbname=POSTGRES_DB,
         port=5431,
     )
-    connection2 = DBConnectionPool(
-        3,
-        10,
-        host="localhost",
-        user=POSTGRES_USER,
-        password=POSTGRES_PASSWORD,
-        dbname=POSTGRES_DB,
-        port=5431,
-    )
-    connection3 = DBConnectionPool(
-        3,
-        10,
+    db_pool_2 = DBConnectionPool(
+        1,
+        5,
         host="localhost",
         user=POSTGRES_USER,
         password=POSTGRES_PASSWORD,
@@ -54,43 +45,88 @@ def main():
         port=5431,
     )
 
-    print("after creating pool")
-    connection1.print_pool()
-    connection2.print_used()
+    log.info("************** START **************")
+    log.info("************** CREATING DB_POOL OBJECTS **************")
+    log.info("ID of db_pool_1: %s", str(id(db_pool_1)))
+    log.info("ID of db_pool_2 %s", str(id(db_pool_2)))
+    log.info(
+        "ID of db_pool_1 and db_pool_2 are identical? %s",
+        str(id(db_pool_1) == id(db_pool_2)),
+    )
 
-    a = connection1.get_connection()
-    print("a: ")
-    print(a)
+    log.info(
+        "db_pool_1 minconn val: %s, maxconn val: %s",
+        str(db_pool_1.minconn),
+        str(db_pool_1.maxconn),
+    )
+    log.info(
+        "db_pool_2 minconn val: %s, maxconn val: %s",
+        str(db_pool_2.minconn),
+        str(db_pool_2.maxconn),
+    )
 
-    connection1.print_pool()
-    connection2.print_used()
+    log.info("**************")
+    log.info("Content of DB pool: ")
+    log.info(db_pool_1.print_pool_content())
 
-    b = connection1.get_connection()
-    print("b: ")
-    print(b)
+    log.info("**************")
+    log.info("Content of DB used dict:")
+    log.info(db_pool_2.print_used_content())
 
-    connection1.print_pool()
-    connection2.print_used()
+    connection1 = db_pool_1.get_connection()
+    log.info("************** CONNECTION 1 ************** ")
+    log.info("Connection 1: %s", str(connection1))
+    log.info("Content of DB pool: ")
+    log.info(db_pool_1.print_pool_content())
 
-    c = connection1.get_connection()
-    print("c: ")
-    print(c)
+    log.info("Content of DB used dict:")
+    log.info(db_pool_1.print_used_content())
 
-    connection1.print_pool()
-    connection2.print_used()
+    connection2 = db_pool_1.get_connection()
+    log.info("************** CONNECTION 2 ************** ")
+    log.info("Connection 2: %s", str(connection2))
+    log.info("Content of DB pool: ")
+    log.info(db_pool_1.print_pool_content())
 
-    log.info("ID of connection1: %s", str(id(connection1)))
-    log.info("ID of connection2 %s", str(id(connection2)))
+    log.info("Content of DB used dict:")
+    log.info(db_pool_1.print_used_content())
 
-    log.info("Amount of minConn: %s", str(connection1.minconn))
-    log.info("Amount of minConn: %s", str(connection2.minconn))
+    connection3 = db_pool_1.get_connection()
+    log.info("************** CONNECTION 3 ************** ")
+    log.info("Connection 3: %s", str(connection3))
+    log.info("Content of DB pool: ")
+    log.info(db_pool_1.print_pool_content())
 
-    # connection1.execute_query("SELECT * FROM table1;")
-    # connection2.execute_query("SELECT * FROM table2;")
+    log.info("Content of DB used dict:")
+    log.info(db_pool_1.print_used_content())
 
-    # db.drop_tables()
+    connection4 = db_pool_1.get_connection()
+    log.info("************** CONNECTION 4 ************** ")
+    log.info("Connection 4: %s", str(connection4))
+    log.info("Content of DB pool: ")
+    log.info(db_pool_1.print_pool_content())
+
+    log.info("Content of DB used dict:")
+    log.info(db_pool_1.print_used_content())
+
+    log.info("************** CONNECTION 3 CLOSE ************** ")
+    db_pool_1.put_away_connection(connection3)
+    log.info("Content of DB pool: ")
+    log.info(db_pool_1.print_pool_content())
+
+    log.info("Content of DB used dict:")
+    log.info(db_pool_1.print_used_content())
+
+    log.info("************** CLOSING ALL CONNECTIONS ************** ")
+    db_pool_1.close_all()
+    log.info("Content of DB pool: ")
+    log.info(db_pool_1.print_pool_content())
+
+    log.info("Content of DB used dict:")
+    log.info(db_pool_1.print_used_content())
+
     db.container_stop()
-    log.info("END")
+    log.info("************** END **************")
 
 
 if __name__ == "__main__":
