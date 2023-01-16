@@ -20,11 +20,11 @@ def main():
     logging.basicConfig(stream=sys.stdout, level=logging.INFO)
     log = logging.getLogger("db_connection_pool_app")
 
-    db = DatabaseUtility(
+    database = DatabaseUtility(
         POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB, POSTGRES_PORT, DB_CONTAINER_NAME
     )
-    db.container_start()
-    db.create_tables()
+    database.container_start()
+    database.create_tables()
 
     db_pool_1 = DBConnectionPool(
         2,
@@ -33,16 +33,16 @@ def main():
         user=POSTGRES_USER,
         password=POSTGRES_PASSWORD,
         dbname=POSTGRES_DB,
-        port=5431,
+        port=POSTGRES_PORT,
     )
     db_pool_2 = DBConnectionPool(
         1,
         5,
-        host="localhost",
+        host="127.0.0.1",
         user=POSTGRES_USER,
         password=POSTGRES_PASSWORD,
         dbname=POSTGRES_DB,
-        port=5431,
+        port=POSTGRES_PORT,
     )
 
     log.info("************** START **************")
@@ -117,6 +117,15 @@ def main():
     log.info("Content of DB used dict:")
     log.info(db_pool_1.print_used_content())
 
+    log.info("************** GET ALL RECORDS FROM TABLE 1 ************** ")
+    result = db_pool_1.execute_query("SELECT * FROM table1;")
+    log.info("Query result: %s", str(result))
+    log.info("Content of DB pool: ")
+    log.info(db_pool_1.print_pool_content())
+
+    log.info("Content of DB used dict:")
+    log.info(db_pool_1.print_used_content())
+
     log.info("************** CLOSING ALL CONNECTIONS ************** ")
     db_pool_1.close_all()
     log.info("Content of DB pool: ")
@@ -125,7 +134,7 @@ def main():
     log.info("Content of DB used dict:")
     log.info(db_pool_1.print_used_content())
 
-    db.container_stop()
+    database.container_stop()
     log.info("************** END **************")
 
 
