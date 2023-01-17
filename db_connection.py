@@ -6,10 +6,18 @@ This module contains singleton class DatabaseConnection which can be used
 to create and manage pool of database connections using psycopg2 lib.
 The class ensures that only one instance of the connection pool is created.
 """
-import psycopg2.pool
+import logging
+import sys
+from typing import List, Union
+import psycopg2
 
 
-class DatabaseConnectionMeta(type):
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+log = logging.getLogger("database_connection_pool")
+# TODO - Create some exceptions
+
+
+class DBConnectionPoolMeta(type):
     """
     The Singleton meta class for DatabaseConnection class.
     This meta class ensures that only one instance of the connection pool is created,
@@ -32,101 +40,157 @@ class DatabaseConnectionMeta(type):
         return cls._instances[cls]
 
 
-class DatabaseConnection(metaclass=DatabaseConnectionMeta):
-    """
-    The DatabaseConnection class used to create and manage a pool of database connections
-    using the psycopg2 library.
+class DBConnectionPool(metaclass=DBConnectionPoolMeta):
+    """The DatabaseConnectionPool class used to create and manage a pool of database connections
+    with using the psycopg2 library.
 
     Attributes:
-        minconn(int): minimum number of connections.
-        maxconn(int): maximum number of connections.
-        host(str):
-        db_user(str): username of postgresql user, which will connect to the db.
-        db_password(str): password for the postgresql user.
-        db_name(str): name of the postgresql database.
+        minconn(int): minimum number of connections in pool.
+        maxconn(int): maximum number of connections in pool.
+        args, kwargs: host, port, db_user, user_pass
+        _pool(list): list with available connections.
+        _used(dict): dictionary with connections that are currently used by clients.
 
     Methods:
-        __init__ : Initializes the connection pool with given credentials.
-        get_connection() : Returns free connection from the pool.
-        put_away_connection() : Puts away the connection.
-        execute_query() : Execute query during the connection.
-        close_all_connections() : Closing all opened connections.
+        __init__: creates DBConnectionPool instance.
+        _connect(): creates DB connection and store that in _pool.
+        get_connection(): returns DB connection from the pool, or creates new when pool is empty.
+        return_connection(): closes a single DB connection and store that into pool.
+        close_all(): closes all DB connections.
+        print_pool_content(): returns a string with _pool content.
+        print_used_content(): returns a string with _used content.
     """
 
-    def __init__(
-        self,
-        minconn: int,
-        maxconn: int,
-        host: str,
-        db_user: str,
-        db_password: str,
-        db_name: str,
-    ):
-        """
-        Creation of a database connection pool.
-        Args:
-            :minconn(int): minimum number of connections.
-            :maxconn(int): maximum number of connections.
-            :host(str):
-            :db_user(str): username of postgresql user, which will connect to the db.
-            :db_password(str): password for the postgresql user.
-            :db_name(str): name of the postgresql database.
-        Returns:
-            None
-        Example:
-             connection1 = DatabaseConnection(1, 10, "localhost", "user", "password", "my_db")
-        """
-
-        self.pool = psycopg2.pool.SimpleConnectionPool(
-            minconn,
-            maxconn,
-            host=host,
-            user=db_user,
-            password=db_password,
-            database=db_name,
-            port=5431,
+    def __init__(self, minconn: int, maxconn: int, *args, **kwargs) -> None:
+        """Creation of database connection pool.
+            Args:
+                :minconn(int): minimum number of connections.
+                :maxconn(int): maximum number of connections.
+            Returns:
+                None
+            Example:
+               db_pool_1 = DBConnectionPool(
+                    5,
+                    10,
+                    host="localhost",
+                    user="postgres_usr",
+                    password="postgres_pass",
+                    dbname="postgres_db",
+                    port=5431,
         )
-
-    def get_connection(self) -> "psycopg2.extensions.connection":
         """
-        get_connection method returns a free connection from the pool.
+        self.minconn = minconn
+        self.maxconn = maxconn
 
+        self._args = args
+        self._kwargs = kwargs
+
+        self._pool = []
+        self._used = []
+
+        # Creation of the required number of connections, which will be stored in db pool.
+        for _ in range(self.minconn):
+            self._connect()
+
+    def _connect(self):
+        """Create the connection to the database, then store that in the _pool list.
+        Arguments:
+            None
         Returns:
-            psycopg2.extensions.connection(obj): object created from psycopg2.extensions.connection
+            :obj: - psycopg2 connection object.
+        """
+        conn = psycopg2.connect(*self._args, **self._kwargs)
+        self._pool.append(conn)
+        return conn
+
+    # Two different types of variable returned
+    def get_connection(self) -> Union[psycopg2.extensions.connection, str]:
+        """Returns a database connection.
+        Arguments:
+            None
+        Returns:
+            psycopg2.extensions.connection: object created from psycopg2.extensions.connection
             which represents a single connection. It can be used to execute SQL statements,
             commit and rollback transactions.
         """
-        return self.pool.getconn()
+        if len(self._pool) > 0:
+            conn = self._pool.pop()
+            # self._used[conn] = True
+            self._used.append(conn)
+            return conn  # returning psycopg2 obj.
 
-    def put_away_connection(self, connection: "psycopg2.extensions.connection") -> None:
-        """_summary_
+        elif len(self._used) < self.maxconn:
+            conn = self._connect()
+            self._pool.remove(conn)
+            # self._used[conn] = True
+            self._used.append(conn)
+            return conn  # returning psycopg2 obj.
 
-        Args:
-            connection (_type_): _description_
-        """
-        self.pool.putconn(connection)
+        else:
+            return "Connection pool exhausted."  # returning string.
 
-    def execute_query(self, query: str) -> None:
-        """
-        execute_query method executes sql query through our database connection.
-        Args:
-            query(str): just SQL query.
-        Returns:
+    def return_connection(self, conn: "psycopg2.extensions.connection") -> None:
+        """Closing a database connection.
+        Arguments:
             None
-        Example:
-            connection1.execute_query("SELECT * FROM table1;")
-        """
-        connection = self.get_connection()
-        cursor = connection.cursor()
-        cursor.execute(query)
-        connection.commit()
-        cursor.close()
-        self.put_away_connection(connection)
-
-    def close_all_connections(self) -> None:
-        """
-        Closing all existing connections.
         Returns:
             None
         """
-        self.pool.closeall()
+        # del self._used[conn]
+        self._used.remove(conn)
+        if len(self._pool) < self.minconn:
+            self._pool.append(conn)
+        else:
+            conn.close()
+
+    def close_all(self) -> None:
+        """Closes all existing database connections."""
+        for connection in self._pool:
+            connection.close()
+        for connection in self._used:
+            connection.close()
+        self._pool = []
+        self._used = []
+
+    def execute_query(self, query: str) -> List:
+        """Executes SQL query in database.
+        Args:
+            query (str): SQL query
+        """
+        try:
+            connection = self.get_connection()
+            cursor = connection.cursor()
+            cursor.execute(query)
+            if query.strip().lower().startswith("select"):
+                result = cursor.fetchall()
+            else:
+                result = None
+            connection.commit()
+            cursor.close()
+            self.return_connection(connection)
+            return result
+
+        except psycopg2.Error as err:
+            log.error("Execute query error: %s", err)
+            return None
+
+    def print_pool_content(self) -> str:
+        """Returns a string with the content of the _pool variable for logging purposes.
+        Returns:
+            str: Content of _pool variable
+        """
+        return f"Pool List: {self._pool}\nLen of Pool: {len(self._pool)}"
+
+    def print_used_content(self) -> str:
+        """Returns a string with the content of the _used variable for logging purposes.
+        Returns:
+            str: Content of _used variable
+        """
+        return f"Used Dict: {self._used}\nLen of Used: {len(self._used)}"
+
+    def check_status(self) -> dict:
+        """Returns a dict with informations about available connections and in use connections
+        Returns:
+            dict: info about available and in use connections
+        """
+        return {"available": len(self._pool), "in use": len(self._used)}
