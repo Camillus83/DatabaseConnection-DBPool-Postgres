@@ -55,7 +55,7 @@ class DBConnectionPool(metaclass=DBConnectionPoolMeta):
         __init__: creates DBConnectionPool instance.
         _connect(): creates DB connection and store that in _pool.
         get_connection(): returns DB connection from the pool, or creates new when pool is empty.
-        put_away_connection(): closes a single DB connection and store that into pool.
+        return_connection(): closes a single DB connection and store that into pool.
         close_all(): closes all DB connections.
         print_pool_content(): returns a string with _pool content.
         print_used_content(): returns a string with _used content.
@@ -127,7 +127,7 @@ class DBConnectionPool(metaclass=DBConnectionPoolMeta):
         else:
             return "Connection pool exhausted."  # returning string.
 
-    def put_away_connection(self, conn: "psycopg2.extensions.connection") -> None:
+    def return_connection(self, conn: "psycopg2.extensions.connection") -> None:
         """Closing a database connection.
         Arguments:
             None
@@ -164,7 +164,7 @@ class DBConnectionPool(metaclass=DBConnectionPoolMeta):
                 result = None
             connection.commit()
             cursor.close()
-            self.put_away_connection(connection)
+            self.return_connection(connection)
             return result
 
         except psycopg2.Error as err:

@@ -110,7 +110,7 @@ def main():
     log.info(db_pool_1.print_used_content())
 
     log.info("************** CONNECTION 3 CLOSE ************** ")
-    db_pool_1.put_away_connection(connection3)
+    db_pool_1.return_connection(connection3)
     log.info("Content of DB pool: ")
     log.info(db_pool_1.print_pool_content())
 
