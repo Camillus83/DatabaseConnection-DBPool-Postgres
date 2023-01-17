@@ -86,7 +86,7 @@ class DBConnectionPool(metaclass=DBConnectionPoolMeta):
         self._kwargs = kwargs
 
         self._pool = []
-        self._used = {}
+        self._used = []
 
         # Creation of the required number of connections, which will be stored in db pool.
         for _ in range(self.minconn):
@@ -115,13 +115,15 @@ class DBConnectionPool(metaclass=DBConnectionPoolMeta):
         """
         if len(self._pool) > 0:
             conn = self._pool.pop()
-            self._used[conn] = True
+            # self._used[conn] = True
+            self._used.append(conn)
             return conn  # returning psycopg2 obj.
 
         elif len(self._used) < self.maxconn:
             conn = self._connect()
             self._pool.remove(conn)
-            self._used[conn] = True
+            # self._used[conn] = True
+            self._used.append(conn)
             return conn  # returning psycopg2 obj.
 
         else:
@@ -134,7 +136,8 @@ class DBConnectionPool(metaclass=DBConnectionPoolMeta):
         Returns:
             None
         """
-        del self._used[conn]
+        # del self._used[conn]
+        self._used.remove(conn)
         if len(self._pool) < self.minconn:
             self._pool.append(conn)
         else:
@@ -147,7 +150,7 @@ class DBConnectionPool(metaclass=DBConnectionPoolMeta):
         for connection in self._used:
             connection.close()
         self._pool = []
-        self._used = {}
+        self._used = []
 
     def execute_query(self, query: str) -> List:
         """Executes SQL query in database.

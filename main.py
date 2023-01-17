@@ -48,7 +48,7 @@ def main():
     log.info("************** START **************")
     log.info("************** CREATING DB_POOL OBJECTS **************")
     log.info("ID of db_pool_1: %s", str(id(db_pool_1)))
-    log.info("ID of db_pool_2 %s", str(id(db_pool_2)))
+    log.info("ID of db_pool_2: %s", str(id(db_pool_2)))
     log.info(
         "ID of db_pool_1 and db_pool_2 are identical? %s",
         str(id(db_pool_1) == id(db_pool_2)),
