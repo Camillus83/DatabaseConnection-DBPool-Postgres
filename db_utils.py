@@ -4,6 +4,11 @@ This module provides class which contains methods for managing a PostgreSQL data
 """
 import time
 import subprocess
+import logging
+import sys
+
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+log = logging.getLogger("database_utility")
 
 
 class DatabaseUtility:
@@ -48,13 +53,11 @@ class DatabaseUtility:
         try:
             subprocess.run(["docker-compose", "up", "-d"], check=True)
         except subprocess.CalledProcessError as docker_error:
-            # TODO - fix that with logs
-            print("Docker container starting error: " + docker_error)
+            log.error("Docker container starting error: %s", str(docker_error))
 
         time.sleep(2)  # Sleep 2 seconds to wait for server/accepting connections.
 
-        # TODO - make it as a log
-        print("Container is running.")
+        log.info("************** Postgres container is running. **************")
 
     def create_tables(self) -> None:
         """
@@ -93,8 +96,7 @@ class DatabaseUtility:
                 )
 
             except subprocess.CalledProcessError as err:
-                # TODO - fix as a log
-                print(err)
+                log.error("Create table error: %s", str(err))
 
     # TODO - fix that drop_tables method.
     def drop_tables(self) -> None:
@@ -119,8 +121,7 @@ class DatabaseUtility:
                 check=True,
             )
         except subprocess.CalledProcessError as err:
-            # TODO - fix it as a log
-            print(err)
+            log.error("Drop tables error: %s", str(err))
 
     def container_stop(self) -> None:
         """
@@ -134,5 +135,4 @@ class DatabaseUtility:
                 ["docker", "volume", "rm", "task3expertsoftserve_db_data"], check=True
             )
         except subprocess.CalledProcessError as err:
-            # TODO - fix it as a log.
-            print(err)
+            log.error("Container stop error: %s", str(err))

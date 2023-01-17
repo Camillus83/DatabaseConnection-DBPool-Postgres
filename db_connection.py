@@ -6,10 +6,14 @@ This module contains singleton class DatabaseConnection which can be used
 to create and manage pool of database connections using psycopg2 lib.
 The class ensures that only one instance of the connection pool is created.
 """
+import logging
+import sys
 from typing import List, Union
 import psycopg2
 
 
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+log = logging.getLogger("database_connection_pool")
 # TODO - Create some exceptions
 
 
@@ -85,7 +89,7 @@ class DBConnectionPool(metaclass=DBConnectionPoolMeta):
         self._used = {}
 
         # Creation of the required number of connections, which will be stored in db pool.
-        for i in range(self.minconn):
+        for _ in range(self.minconn):
             self._connect()
 
     def _connect(self):
@@ -160,12 +164,12 @@ class DBConnectionPool(metaclass=DBConnectionPoolMeta):
                 result = None
             connection.commit()
             cursor.close()
-
             self.put_away_connection(connection)
             return result
+
         except psycopg2.Error as err:
-            print(err)
-            raise err
+            log.error("Execute query error: %s", err)
+            return None
 
     def print_pool_content(self) -> str:
         """Returns a string with the content of the _pool variable for logging purposes.
@@ -180,3 +184,10 @@ class DBConnectionPool(metaclass=DBConnectionPoolMeta):
             str: Content of _used variable
         """
         return f"Used Dict: {self._used}\nLen of Used: {len(self._used)}"
+
+    def check_status(self) -> dict:
+        """Returns a dict with informations about available connections and in use connections
+        Returns:
+            dict: info about available and in use connections
+        """
+        return {"available": len(self._pool), "in use": len(self._used)}
