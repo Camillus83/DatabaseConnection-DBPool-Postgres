@@ -51,6 +51,7 @@ class DBConnectionPool(metaclass=DBConnectionPoolMeta):
         args, kwargs: host, port, db_user, user_pass
         _pool(list): list with available connections.
         _used(dict): dictionary with connections that are currently used by clients.
+        lock(obj): #TODO add it.
 
     Methods:
         __init__: creates DBConnectionPool instance.
