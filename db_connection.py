@@ -9,6 +9,7 @@ The class ensures that only one instance of the connection pool is created.
 import logging
 import sys
 from typing import List, Union
+import threading
 import psycopg2
 
 
@@ -50,6 +51,7 @@ class DBConnectionPool(metaclass=DBConnectionPoolMeta):
         args, kwargs: host, port, db_user, user_pass
         _pool(list): list with available connections.
         _used(dict): dictionary with connections that are currently used by clients.
+        lock(obj): #TODO add it.
 
     Methods:
         __init__: creates DBConnectionPool instance.
@@ -88,6 +90,8 @@ class DBConnectionPool(metaclass=DBConnectionPoolMeta):
         self._pool = []
         self._used = []
 
+        self.lock = threading.Lock()
+
         # Creation of the required number of connections, which will be stored in db pool.
         for _ in range(self.minconn):
             self._connect()
@@ -113,21 +117,20 @@ class DBConnectionPool(metaclass=DBConnectionPoolMeta):
             which represents a single connection. It can be used to execute SQL statements,
             commit and rollback transactions.
         """
-        if len(self._pool) > 0:
-            conn = self._pool.pop()
-            # self._used[conn] = True
-            self._used.append(conn)
-            return conn  # returning psycopg2 obj.
+        with self.lock:
+            if len(self._pool) > 0:
+                conn = self._pool.pop()
+                self._used.append(conn)
+                return conn  # returning psycopg2 obj.
 
-        elif len(self._used) < self.maxconn:
-            conn = self._connect()
-            self._pool.remove(conn)
-            # self._used[conn] = True
-            self._used.append(conn)
-            return conn  # returning psycopg2 obj.
+            elif len(self._used) < self.maxconn:
+                conn = self._connect()
+                self._pool.remove(conn)
+                self._used.append(conn)
+                return conn  # returning psycopg2 obj.
 
-        else:
-            return "Connection pool exhausted."  # returning string.
+            else:
+                return "Connection pool exhausted."  # returning string.
 
     def return_connection(self, conn: "psycopg2.extensions.connection") -> None:
         """Closing a database connection.
@@ -136,21 +139,22 @@ class DBConnectionPool(metaclass=DBConnectionPoolMeta):
         Returns:
             None
         """
-        # del self._used[conn]
-        self._used.remove(conn)
-        if len(self._pool) < self.minconn:
-            self._pool.append(conn)
-        else:
-            conn.close()
+        with self.lock:
+            self._used.remove(conn)
+            if len(self._pool) < self.minconn:
+                self._pool.append(conn)
+            else:
+                conn.close()
 
     def close_all(self) -> None:
         """Closes all existing database connections."""
-        for connection in self._pool:
-            connection.close()
-        for connection in self._used:
-            connection.close()
-        self._pool = []
-        self._used = []
+        with self.lock:
+            for connection in self._pool:
+                connection.close()
+            for connection in self._used:
+                connection.close()
+            self._pool = []
+            self._used = []
 
     def execute_query(self, query: str) -> List:
         """Executes SQL query in database.
@@ -186,7 +190,7 @@ class DBConnectionPool(metaclass=DBConnectionPoolMeta):
         Returns:
             str: Content of _used variable
         """
-        return f"Used Dict: {self._used}\nLen of Used: {len(self._used)}"
+        return f"Used List: {self._used}\nLen of Used: {len(self._used)}"
 
     def check_status(self) -> dict:
         """Returns a dict with informations about available connections and in use connections
