@@ -10,6 +10,13 @@ import sys
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 log = logging.getLogger("database_utility")
 
+def get_users(conn):
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM table1;")
+    result = cursor.fetchall()
+    conn.commit()
+    cursor.close()
+    return result
 
 class DatabaseUtility:
     """
