@@ -95,7 +95,7 @@ class DBConnectionPool(metaclass=DBConnectionPoolMeta):
             psycopg2.extensions.connection: psycopg2.extensions.connection object.
         """
         with self.lock:
-            if len(self._used) < self.maxconn:
+            if (len(self._used) + len(self._pool)) < self.maxconn:
                 if self._pool:
                     conn = self._pool.pop()
                 else:
@@ -105,7 +105,7 @@ class DBConnectionPool(metaclass=DBConnectionPoolMeta):
 
             log.warning("too many connections")
             raise Exception("Too many connections.")
-            #return None
+            # return None
 
     def return_connection(self, conn: "psycopg2.extensions.connection") -> None:
         """Closing a database connection."""
@@ -132,8 +132,8 @@ class DBConnectionPool(metaclass=DBConnectionPoolMeta):
 
     def print_pool_content(self) -> str:
         """Returns a string with the content of the _pool variable for logging purposes.
-            Returns:
-            str: Content of _pool variable
+        Returns:
+        str: Content of _pool variable
         """
         return f"Pool List: {self._pool}\nLen of Pool: {len(self._pool)}"
 

@@ -88,21 +88,17 @@ def main():
     connection2 = db_pool_1.get_connection()
     log.info("************** CONNECTION 2 ************** ")
     log.info("Connection 2: %s", str(connection2))
-
     log.info(str(db_pool_1.check_status()))
 
     connection3 = db_pool_1.get_connection()
     log.info("************** CONNECTION 3 ************** ")
     log.info("Connection 3: %s", str(connection3))
-
     log.info(str(db_pool_1.check_status()))
 
-    connection4 = db_pool_1.get_connection()
-    log.info("************** CONNECTION 4 ************** ")
-    log.info("Connection 4: %s", str(connection4))
-
-    log.info(str(db_pool_1.check_status()))
-
+    # connection4 = db_pool_1.get_connection()
+    # log.info("************** CONNECTION 4 ************** ")
+    # log.info("Connection 4: %s", str(connection4))
+    # log.info(str(db_pool_1.check_status()))
     log.info("************** CONNECTION 3 CLOSE ************** ")
     db_pool_1.return_connection(connection3)
     log.info("Content of DB pool: ")
@@ -142,14 +138,6 @@ def main():
         print(str(db_pool.check_status()))
 
     print(str(db_pool.check_status()))
-
-    # with db_pool_1 as conn1:
-    #     log.info("conn1: %s", str(conn1))
-    #     log.info(str(db_pool_1.check_status()))
-    #     query_result = get_users(conn1)
-    #     log.info("Query result: %s", str(query_result))
-
-    # log.info(str(db_pool_1.check_status()))
 
     database.container_stop()
     log.info("************** END **************")
