@@ -1,9 +1,12 @@
-"""_summary_
+"""
+Main script for execute db_pool.
 """
 import os
 import sys
 import logging
+
 from dotenv import load_dotenv
+
 from db_utils import DatabaseUtility, get_users
 from db_connection import DBConnectionPool
 
@@ -85,29 +88,20 @@ def main():
     connection2 = db_pool_1.get_connection()
     log.info("************** CONNECTION 2 ************** ")
     log.info("Connection 2: %s", str(connection2))
-    # log.info("Content of DB pool: ")
-    # log.info(db_pool_1.print_pool_content())
+
     log.info(str(db_pool_1.check_status()))
-    # log.info("Content of DB used dict:")
-    # log.info(db_pool_1.print_used_content())
 
     connection3 = db_pool_1.get_connection()
     log.info("************** CONNECTION 3 ************** ")
     log.info("Connection 3: %s", str(connection3))
-    # log.info("Content of DB pool: ")
-    # log.info(db_pool_1.print_pool_content())
+
     log.info(str(db_pool_1.check_status()))
-    # log.info("Content of DB used dict:")
-    # log.info(db_pool_1.print_used_content())
 
     connection4 = db_pool_1.get_connection()
     log.info("************** CONNECTION 4 ************** ")
     log.info("Connection 4: %s", str(connection4))
-    # log.info("Content of DB pool: ")
-    # log.info(db_pool_1.print_pool_content())
+
     log.info(str(db_pool_1.check_status()))
-    # log.info("Content of DB used dict:")
-    # log.info(db_pool_1.print_used_content())
 
     log.info("************** CONNECTION 3 CLOSE ************** ")
     db_pool_1.return_connection(connection3)
@@ -117,35 +111,45 @@ def main():
     log.info("Content of DB used dict:")
     log.info(db_pool_1.print_used_content())
 
-    log.info("************** GET ALL RECORDS FROM TABLE 1 ************** ")
-    result = db_pool_1.execute_query("SELECT * FROM table1;")
-    log.info("Query result: %s", str(result))
-    # log.info("Content of DB pool: ")
-    # log.info(db_pool_1.print_pool_content())
-    log.info(str(db_pool_1.check_status()))
-    # log.info("Content of DB used dict:")
-    # log.info(db_pool_1.print_used_content())
+    # log.info("************** GET ALL RECORDS FROM TABLE 1 ************** ")
+    # result = db_pool_1.execute_query("SELECT * FROM table1;")
+    # log.info("Query result: %s", str(result))
+
+    # log.info(str(db_pool_1.check_status()))
 
     log.info("************** CLOSING ALL CONNECTIONS ************** ")
     db_pool_1.close_all()
 
-    # log.info("Content of DB pool: ")
-    # log.info(db_pool_1.print_pool_content())
     log.info(str(db_pool_1.check_status()))
-    # log.info("Content of DB used dict:")
-    # log.info(db_pool_1.print_used_content())
 
     log.info("************** CONTEXT MANAGER  ************** ")
 
-    with db_pool_1 as conn1:
-        log.info("conn1: %s", str(conn1))
-        log.info(str(db_pool_1.check_status()))
+    with DBConnectionPool(
+        3,
+        5,
+        host="127.0.0.1",
+        user=POSTGRES_USER,
+        password=POSTGRES_PASSWORD,
+        dbname=POSTGRES_DB,
+        port=POSTGRES_PORT,
+    ) as db_pool:
+        conn1 = db_pool.get_connection()
+        conn2 = db_pool.get_connection()
+        print(str(db_pool.check_status()))
         query_result = get_users(conn1)
-        log.info("Query result: %s", str(query_result))
-    
-    log.info(str(db_pool_1.check_status()))
-    
+        print(str(query_result))
+        db_pool.return_connection(conn2)
+        print(str(db_pool.check_status()))
 
+    print(str(db_pool.check_status()))
+
+    # with db_pool_1 as conn1:
+    #     log.info("conn1: %s", str(conn1))
+    #     log.info(str(db_pool_1.check_status()))
+    #     query_result = get_users(conn1)
+    #     log.info("Query result: %s", str(query_result))
+
+    # log.info(str(db_pool_1.check_status()))
 
     database.container_stop()
     log.info("************** END **************")

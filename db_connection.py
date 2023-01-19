@@ -4,8 +4,8 @@ Module for managing database connection pool using psycopg2.
 """
 import logging
 import sys
-from typing import List
 import threading
+
 import psycopg2
 
 
@@ -103,10 +103,9 @@ class DBConnectionPool(metaclass=DBConnectionPoolMeta):
                 self._used.append(conn)
                 return conn
 
-            print("too many connections")
-            # raise Exception("Too many connections.")
-            return None
-
+            log.warning("too many connections")
+            raise Exception("Too many connections.")
+            #return None
 
     def return_connection(self, conn: "psycopg2.extensions.connection") -> None:
         """Closing a database connection."""
@@ -125,40 +124,15 @@ class DBConnectionPool(metaclass=DBConnectionPoolMeta):
             self._pool = []
             self._used = []
 
-    def execute_query(self, query: str) -> List:
-        """Executes SQL query in database.
-        Args:
-            query (str): SQL query
-        """
-        try:
-            connection = self.get_connection()
-            cursor = connection.cursor()
-            cursor.execute(query)
-            if query.strip().lower().startswith("select"):
-                result = cursor.fetchall()
-            else:
-                result = None
-            connection.commit()
-            cursor.close()
-            self.return_connection(connection)
-            return result
-
-        except psycopg2.Error as err:
-            log.error("Execute query error: %s", err)
-            return None
-
     def __enter__(self):
-        self.connection = self.get_connection()
-        return self.connection
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.return_connection(self.connection)
-        self.connection = None
-    
-    
+        self.close_all()
+
     def print_pool_content(self) -> str:
         """Returns a string with the content of the _pool variable for logging purposes.
-        Returns:
+            Returns:
             str: Content of _pool variable
         """
         return f"Pool List: {self._pool}\nLen of Pool: {len(self._pool)}"
@@ -175,4 +149,7 @@ class DBConnectionPool(metaclass=DBConnectionPoolMeta):
         Returns:
             dict: info about available and in use connections
         """
-        return {"available connections (_pool)": len(self._pool), "in use connections (_used)": len(self._used)}
+        return {
+            "available connections (_pool)": len(self._pool),
+            "in use connections (_used)": len(self._used),
+        }

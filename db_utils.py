@@ -10,6 +10,7 @@ import sys
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 log = logging.getLogger("database_utility")
 
+
 def get_users(conn):
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM table1;")
@@ -17,6 +18,7 @@ def get_users(conn):
     conn.commit()
     cursor.close()
     return result
+
 
 class DatabaseUtility:
     """
@@ -104,31 +106,6 @@ class DatabaseUtility:
 
             except subprocess.CalledProcessError as err:
                 log.error("Create table error: %s", str(err))
-
-    # TODO - fix that drop_tables method.
-    def drop_tables(self) -> None:
-        """
-        Dropping existing tables in database.
-        :return: None
-        """
-        try:
-            subprocess.run(
-                [
-                    "docker",
-                    "exec",
-                    "-it",
-                    self.db_container_name,
-                    "psql",
-                    "-U",
-                    self.postgres_user,
-                    "-d",
-                    self.postgres_db,
-                    "DROP TABLE IF EXISTS table1, table2;",
-                ],
-                check=True,
-            )
-        except subprocess.CalledProcessError as err:
-            log.error("Drop tables error: %s", str(err))
 
     def container_stop(self) -> None:
         """
