@@ -2,3 +2,4 @@
 prototypes
 __pycache__/
 .vscode/
+#I know .env should be there also.
