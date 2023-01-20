@@ -73,6 +73,13 @@ class DBConnectionPool(metaclass=DBConnectionPoolMeta):
                     port=5431,
         )
         """
+        if not isinstance(minconn, int) or not isinstance(maxconn, int):
+            raise ValueError("Minconn and maxconn must be integers.")
+        if minconn < 1 or maxconn < 1:
+            raise ValueError("Minconn and maxconn must be more than 1.")
+        if minconn > maxconn:
+            raise ValueError("Minconn must be smaller than maxconn.")
+
         self.minconn = minconn
         self.maxconn = maxconn
 
