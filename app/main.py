@@ -5,10 +5,13 @@ import os
 import sys
 import logging
 
+sys.path.append(".")
+
 from dotenv import load_dotenv
 
-from db_utils import DatabaseUtility, get_users
-from db_connection import DBConnectionPool
+from database.db_utils import DatabaseUtility, get_users
+from database.db_connection import DBConnectionPool
+
 
 load_dotenv()
 POSTGRES_USER = os.environ["POSTGRES_USER"]
@@ -24,7 +27,11 @@ def main():
     log = logging.getLogger("db_connection_pool_app")
 
     database = DatabaseUtility(
-        POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB, POSTGRES_PORT, DB_CONTAINER_NAME
+        POSTGRES_USER,
+        POSTGRES_PASSWORD,
+        POSTGRES_DB,
+        int(POSTGRES_PORT),
+        DB_CONTAINER_NAME,
     )
     database.container_start()
     database.create_tables()

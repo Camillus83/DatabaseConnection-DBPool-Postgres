@@ -4,8 +4,8 @@ import os
 import pytest
 from dotenv import load_dotenv
 
-from db_utils import DatabaseUtility
-from db_connection import DBConnectionPool
+from database.db_utils import DatabaseUtility
+from database.db_connection import DBConnectionPool
 
 load_dotenv()
 POSTGRES_USER = os.environ["POSTGRES_USER"]
@@ -24,7 +24,11 @@ def db_container():
     Prepare and runs a container with postgresql database.
     """
     database = DatabaseUtility(
-        POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB, int(POSTGRES_PORT), DB_CONTAINER_NAME
+        POSTGRES_USER,
+        POSTGRES_PASSWORD,
+        POSTGRES_DB,
+        int(POSTGRES_PORT),
+        DB_CONTAINER_NAME,
     )
     database.container_start()
     yield database

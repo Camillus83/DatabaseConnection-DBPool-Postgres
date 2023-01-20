@@ -78,16 +78,11 @@ class DBConnectionPool(metaclass=DBConnectionPoolMeta):
 
         self._kwargs = kwargs
 
+        # Creation of the required number of connections, which will be stored in db pool.
         self._pool = [psycopg2.connect(**self._kwargs) for _ in range(self.minconn)]
         self._used = []
 
         self.lock = threading.Lock()
-
-        # Creation of the required number of connections, which will be stored in db pool.
-
-        # for _ in range(self.minconn):
-        #     conn = psycopg2.connect(**self._kwargs)
-        #     self._pool.append(conn)
 
     def get_connection(self) -> "psycopg2.extensions.connection":
         """Returns a database connection.
