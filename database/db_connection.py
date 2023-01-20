@@ -113,8 +113,11 @@ class DBConnectionPool(metaclass=DBConnectionPoolMeta):
         """Closing a database connection."""
 
         with self.lock:
-            self._used.remove(conn)
-            self._pool.append(conn)
+            if conn in self._used:
+                self._used.remove(conn)
+                self._pool.append(conn)
+            else:
+                raise Exception("That is not our connection!")
 
     def close_all(self) -> None:
         """Closes all existing database connections."""
