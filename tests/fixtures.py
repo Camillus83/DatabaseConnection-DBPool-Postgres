@@ -1,3 +1,4 @@
+"""Fixtures for pytest tests."""
 import os
 
 import pytest
@@ -19,8 +20,11 @@ MAX_CONNECTIONS = 10
 
 @pytest.fixture(scope="session")
 def db_container():
+    """
+    Prepare and runs a container with postgresql database.
+    """
     database = DatabaseUtility(
-        POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB, POSTGRES_PORT, DB_CONTAINER_NAME
+        POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB, int(POSTGRES_PORT), DB_CONTAINER_NAME
     )
     database.container_start()
     yield database
@@ -29,7 +33,10 @@ def db_container():
 
 @pytest.fixture(scope="session")
 def db_pool():
-    db_pool = DBConnectionPool(
+    """
+    Preparing and returning DBConnectionPool object.
+    """
+    database_pool = DBConnectionPool(
         MIN_CONNECTIONS,
         MAX_CONNECTIONS,
         host="localhost",
@@ -38,13 +45,16 @@ def db_pool():
         dbname=POSTGRES_DB,
         port=POSTGRES_PORT,
     )
-    yield db_pool
-    db_pool.close_all()
+    yield database_pool
+    database_pool.close_all()
 
 
 @pytest.fixture(scope="session")
 def db_pool_2():
-    db_pool = DBConnectionPool(
+    """
+    Preparing and returning DBConnectionPool object.
+    """
+    database_pool = DBConnectionPool(
         15,
         30,
         host="localhost",
@@ -53,5 +63,5 @@ def db_pool_2():
         dbname=POSTGRES_DB,
         port=POSTGRES_PORT,
     )
-    yield db_pool
-    db_pool.close_all()
+    yield database_pool
+    database_pool.close_all()

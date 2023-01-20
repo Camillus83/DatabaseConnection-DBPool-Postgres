@@ -30,8 +30,8 @@ def main():
     database.create_tables()
 
     db_pool_1 = DBConnectionPool(
-        2,
-        3,
+        5,
+        10,
         host="localhost",
         user=POSTGRES_USER,
         password=POSTGRES_PASSWORD,
@@ -106,12 +106,6 @@ def main():
 
     log.info("Content of DB used dict:")
     log.info(db_pool_1.print_used_content())
-
-    # log.info("************** GET ALL RECORDS FROM TABLE 1 ************** ")
-    # result = db_pool_1.execute_query("SELECT * FROM table1;")
-    # log.info("Query result: %s", str(result))
-
-    # log.info(str(db_pool_1.check_status()))
 
     log.info("************** CLOSING ALL CONNECTIONS ************** ")
     db_pool_1.close_all()

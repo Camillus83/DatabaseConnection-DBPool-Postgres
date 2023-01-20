@@ -11,7 +11,6 @@ import psycopg2
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 log = logging.getLogger("database_connection_pool")
-# TODO - Create some exceptions
 
 
 class DBConnectionPoolMeta(type):
@@ -79,15 +78,16 @@ class DBConnectionPool(metaclass=DBConnectionPoolMeta):
 
         self._kwargs = kwargs
 
-        self._pool = []
+        self._pool = [psycopg2.connect(**self._kwargs) for _ in range(self.minconn)]
         self._used = []
 
         self.lock = threading.Lock()
 
         # Creation of the required number of connections, which will be stored in db pool.
-        for _ in range(self.minconn):
-            conn = psycopg2.connect(**self._kwargs)
-            self._pool.append(conn)
+
+        # for _ in range(self.minconn):
+        #     conn = psycopg2.connect(**self._kwargs)
+        #     self._pool.append(conn)
 
     def get_connection(self) -> "psycopg2.extensions.connection":
         """Returns a database connection.
@@ -153,3 +153,11 @@ class DBConnectionPool(metaclass=DBConnectionPoolMeta):
             "available connections (_pool)": len(self._pool),
             "in use connections (_used)": len(self._used),
         }
+
+    def pool_length(self) -> int:
+        """Returns pool length"""
+        return len(self._pool)
+
+    def used_length(self) -> int:
+        """Return used connections length"""
+        return len(self._used)
