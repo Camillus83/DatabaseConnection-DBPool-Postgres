@@ -8,6 +8,8 @@ import threading
 
 import psycopg2
 
+from .db_exceptions import DBConnectionPoolError
+
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 log = logging.getLogger("database_connection_pool")
@@ -73,8 +75,6 @@ class DBConnectionPool(metaclass=DBConnectionPoolMeta):
                     port=5431,
         )
         """
-        if not isinstance(minconn, int) or not isinstance(maxconn, int):
-            raise ValueError("Minconn and maxconn must be integers.")
         if minconn < 1 or maxconn < 1:
             raise ValueError("Minconn and maxconn must be more than 1.")
         if minconn > maxconn:
@@ -105,9 +105,9 @@ class DBConnectionPool(metaclass=DBConnectionPoolMeta):
                 self._used.append(conn)
                 return conn
 
-            log.warning("too many connections")
-            raise Exception("Too many connections.")
-            # return None
+            log.warning("Too many connections.")
+            #raise Exception("Too many connections.")
+            raise DBConnectionPoolError("Too many connections.")
 
     def return_connection(self, conn: "psycopg2.extensions.connection") -> None:
         """Closing a database connection."""
@@ -117,7 +117,7 @@ class DBConnectionPool(metaclass=DBConnectionPoolMeta):
                 self._used.remove(conn)
                 self._pool.append(conn)
             else:
-                raise Exception("That is not our connection!")
+                raise DBConnectionPoolError("That is not our connection!")
 
     def close_all(self) -> None:
         """Closes all existing database connections."""

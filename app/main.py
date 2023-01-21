@@ -37,8 +37,8 @@ def main():
     database.create_tables()
 
     db_pool_1 = DBConnectionPool(
-        5,
-        10,
+        2,
+        3,
         host="localhost",
         user=POSTGRES_USER,
         password=POSTGRES_PASSWORD,

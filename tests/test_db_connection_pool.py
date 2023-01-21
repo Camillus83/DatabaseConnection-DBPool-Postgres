@@ -4,6 +4,7 @@ import pytest
 from psycopg2.extensions import connection
 
 from fixtures import db_container, db_pool, db_pool_2, MAX_CONNECTIONS, MIN_CONNECTIONS
+from database.db_exceptions import DBConnectionPoolError
 
 
 def test_singleton(db_container, db_pool, db_pool_2):
@@ -39,6 +40,15 @@ def test_get_connection(db_pool):
     assert isinstance(conn, connection)
     db_pool.return_connection(conn)
 
+def test_put_foreign_connection(db_pool):
+    """
+    This test functions checks if  raising exception works when someone tries to return
+    foreign connection.
+    """
+    with pytest.raises(DBConnectionPoolError, match="That is not our connection!"):
+        conn = {"fake":"connection"}
+        db_pool.return_connection(conn)
+
 
 def test_put_connection(db_pool):
     """
@@ -56,7 +66,7 @@ def test_connections_exhausted(db_pool):
     """
     This test function checks if raising exception works when it's too many connections.
     """
-    with pytest.raises(Exception, match="Too many connections."):
+    with pytest.raises(DBConnectionPoolError, match="Too many connections."):
         for _ in range(MAX_CONNECTIONS + 1):
             db_pool.get_connection()
     db_pool.close_all()
