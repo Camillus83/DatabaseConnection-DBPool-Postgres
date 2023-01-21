@@ -106,7 +106,6 @@ class DBConnectionPool(metaclass=DBConnectionPoolMeta):
                 return conn
 
             log.warning("Too many connections.")
-            #raise Exception("Too many connections.")
             raise DBConnectionPoolError("Too many connections.")
 
     def return_connection(self, conn: "psycopg2.extensions.connection") -> None:
