@@ -5,5 +5,4 @@ class DBConnectionPoolError(Exception):
     """
     Exceptions for DBConnectionPool class.
     """
-
     pass
