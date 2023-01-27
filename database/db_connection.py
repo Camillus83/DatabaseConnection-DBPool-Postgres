@@ -76,9 +76,9 @@ class DBConnectionPool(metaclass=DBConnectionPoolMeta):
         )
         """
         if minconn < 1 or maxconn < 1:
-            raise ValueError("Minconn and maxconn must be more than 1.")
+            raise DBConnectionPoolError("Minconn and maxconn must be more than 1.")
         if minconn > maxconn:
-            raise ValueError("Minconn must be smaller than maxconn.")
+            raise DBConnectionPoolError("Minconn must be smaller than maxconn.")
 
         self.minconn = minconn
         self.maxconn = maxconn

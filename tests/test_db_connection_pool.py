@@ -70,7 +70,6 @@ def test_closing_all_connections(db_pool):
     """
 
     for i in range(MIN_CONNECTIONS + 1):
-        print(i)
         db_pool.get_connection()
 
     temp_used_list = db_pool._used.copy()
