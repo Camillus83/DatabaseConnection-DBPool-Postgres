@@ -121,9 +121,9 @@ class DBConnectionPool(metaclass=DBConnectionPoolMeta):
     def close_all(self) -> None:
         """Closes all existing database connections."""
         with self.lock:
+            if self._used:
+                raise DBConnectionPoolError("Some connections are still in use!")
             for connection in self._pool:
-                connection.close()
-            for connection in self._used:
                 connection.close()
             self._pool = []
             self._used = []
