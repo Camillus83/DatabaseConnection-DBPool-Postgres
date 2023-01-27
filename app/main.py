@@ -141,14 +141,14 @@ def main():
     ) as db_pool:
         conn1 = db_pool.get_connection()
         conn2 = db_pool.get_connection()
-        print(str(db_pool.check_status()))
+        log.info(str(db_pool.check_status()))
         query_result = get_users(conn1)
-        print(str(query_result))
+        log.info(str(query_result))
         db_pool.return_connection(conn1)
         db_pool.return_connection(conn2)
-        print(str(db_pool.check_status()))
+        log.info(str(db_pool.check_status()))
 
-    print(str(db_pool.check_status()))
+    log.info(str(db_pool.check_status()))
 
     database.container_stop()
     log.info("************** END **************")
