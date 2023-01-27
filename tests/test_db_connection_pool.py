@@ -1,5 +1,6 @@
 """Tests for database connection pool app."""
 import pytest
+from time import sleep
 
 from psycopg2.extensions import connection
 
@@ -40,13 +41,14 @@ def test_get_connection(db_pool):
     assert isinstance(conn, connection)
     db_pool.return_connection(conn)
 
+
 def test_put_foreign_connection(db_pool):
     """
     This test functions checks if  raising exception works when someone tries to return
     foreign connection.
     """
     with pytest.raises(DBConnectionPoolError, match="That is not our connection!"):
-        conn = {"fake":"connection"}
+        conn = {"fake": "connection"}
         db_pool.return_connection(conn)
 
 
@@ -62,6 +64,26 @@ def test_put_connection(db_pool):
     assert db_pool.pool_length() == pool_len_before_conn
 
 
+def test_closing_all_connections(db_pool):
+    """
+    This test function checks if closing all connections method works correctly.
+    """
+
+    for i in range(MIN_CONNECTIONS + 1):
+        print(i)
+        db_pool.get_connection()
+
+    temp_used_list = db_pool._used.copy()
+
+    for conn in temp_used_list:
+        db_pool.return_connection(conn)
+
+    db_pool.close_all()
+
+    assert db_pool.pool_length() == 0
+    assert db_pool.used_length() == 0
+
+
 def test_connections_exhausted(db_pool):
     """
     This test function checks if raising exception works when it's too many connections.
@@ -69,15 +91,8 @@ def test_connections_exhausted(db_pool):
     with pytest.raises(DBConnectionPoolError, match="Too many connections."):
         for _ in range(MAX_CONNECTIONS + 1):
             db_pool.get_connection()
-    db_pool.close_all()
 
+    temp_used_list = db_pool._used.copy()
 
-def test_closing_all_connections(db_pool):
-    """
-    This test function checks if closing all connections method works correctly.
-    """
-    for _ in range(MIN_CONNECTIONS + 1):
-        db_pool.get_connection()
-    db_pool.close_all()
-    assert db_pool.pool_length() == 0
-    assert db_pool.used_length() == 0
+    for conn in temp_used_list:
+        db_pool.return_connection(conn)

@@ -114,6 +114,15 @@ def main():
     log.info("Content of DB used dict:")
     log.info(db_pool_1.print_used_content())
 
+    log.info("************** RETURNING USED CONNECTIONS **************")
+    db_pool_1.return_connection(connection2)
+    db_pool_1.return_connection(connection1)
+    log.info("Content of DB pool: ")
+    log.info(db_pool_1.print_pool_content())
+
+    log.info("Content of DB used dict:")
+    log.info(db_pool_1.print_used_content())
+
     log.info("************** CLOSING ALL CONNECTIONS ************** ")
     db_pool_1.close_all()
 
@@ -135,6 +144,7 @@ def main():
         print(str(db_pool.check_status()))
         query_result = get_users(conn1)
         print(str(query_result))
+        db_pool.return_connection(conn1)
         db_pool.return_connection(conn2)
         print(str(db_pool.check_status()))
 
